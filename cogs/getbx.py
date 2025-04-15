@@ -3,9 +3,9 @@ from discord import app_commands
 from discord.ext import commands
 import os
 import json
-from .gamelist import game_list
-from .GameSpecs.chunithm import ChunithmProfile
-from .GameSpecs.maimaidx import MaimaiDXProfile
+from cogs.GameSpecs.gamelist import game_list
+from cogs.GameSpecs.chunithm import ChunithmProfile
+from cogs.GameSpecs.maimaidx import MaimaiDXProfile
 from typing import Optional
 
 parentPath = os.path.dirname(os.path.abspath(__file__))
@@ -13,7 +13,7 @@ supported_games = list(game_list.keys())
 best_types = {"ingame":"In-game","naive":"Naive"}
 
 
-def get_bx(game, ratingType, id):
+def get_best_x(game, ratingType, id):
     path = parentPath+f"/profiles/{id}.json"
     
     if os.path.exists(path):
@@ -82,7 +82,7 @@ class GetBX(commands.Cog):
         game_name = game_name.value
         best_type = best_type.value if best_type else "naive"
                 
-        data, answer = get_bx(game_name, best_type, id)
+        data, answer = get_best_x(game_name, best_type, id)
 
         embed=discord.Embed(title=f"{name}\'s {game_list[game_name]['display_name']} best {game_list[game_name]['pb_amount_in_top']} ({best_types[best_type]})")
 

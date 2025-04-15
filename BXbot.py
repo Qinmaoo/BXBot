@@ -16,7 +16,7 @@ class MyBot(commands.Bot):
             application_id = 1091031271402127361
         )
 
-        self.initial_extensions = ["cogs.register", "cogs.kamai","cogs.get_bx"]
+        self.initial_extensions = ["cogs.register", "cogs.kamai","cogs.getbx"]
     
     async def setup_hook(self):
         self.session = aiohttp.ClientSession()

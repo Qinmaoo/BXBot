@@ -1,4 +1,9 @@
 import requests
+from gamelist import game_list
+
+top_amount = game_list["chunithm"]["pb_amount_in_top"]
+old_amount = game_list["chunithm"]["pb_amount_in_old"]
+new_amount = game_list["chunithm"]["pb_amount_in_new"]
 
 def is_verse_chart(chart):
         versions = chart.get("versions", [])
@@ -41,13 +46,13 @@ class ChunithmProfile:
         
         if is_verse_chart(chart):
             self.best_new.append(ChunithmScore(score, songid, songname, diff, internal_level, rating, lamp))
-            self.best_new = sorted(self.best_new, key=lambda x: x.rating, reverse=True)[:20]
+            self.best_new = sorted(self.best_new, key=lambda x: x.rating, reverse=True)[:new_amount]
         else:
             self.best_old.append(ChunithmScore(score, songid, songname, diff, internal_level, rating, lamp))
-            self.best_old = sorted(self.best_old, key=lambda x: x.rating, reverse=True)[:30]
+            self.best_old = sorted(self.best_old, key=lambda x: x.rating, reverse=True)[:old_amount]
             
         self.best_naive.append(ChunithmScore(score, songid, songname, diff, internal_level, rating, lamp))
-        self.best_naive = sorted(self.best_naive, key=lambda x: x.rating, reverse=True)[:50]
+        self.best_naive = sorted(self.best_naive, key=lambda x: x.rating, reverse=True)[:top_amount]
 
     def reload_pbs(self):
         try:
@@ -74,30 +79,26 @@ class ChunithmProfile:
         sum_of_ratings = 0
         for score in self.best_new:
             sum_of_ratings += score.rating
-        b20_rating = round(sum_of_ratings/20,2)
-        return b20_rating
+        new_rating = round(sum_of_ratings/new_amount,2)
+        return new_rating
     
     def get_old_rating(self):
         sum_of_ratings = 0
         for score in self.best_old:
             sum_of_ratings += score.rating
-        b30_rating = round(sum_of_ratings/30,2)
-        return b30_rating
+        old_rating = round(sum_of_ratings/old_amount,2)
+        return old_rating
     
     def get_naive_rating(self):
         sum_of_ratings = 0
         for score in self.best_naive:
             sum_of_ratings += score.rating
-        b50_rating = round(sum_of_ratings/50,2)
-        return b50_rating
+        naive_rating = round(sum_of_ratings/top_amount,2)
+        return naive_rating
     
     def get_ingame_rating(self):
         new_rating = self.get_new_rating()
         old_rating = self.get_old_rating()
 
-        ingame_rating = round((new_rating*20 + old_rating*30)/50,2)
+        ingame_rating = round((new_rating*new_amount + old_rating*old_amount)/50,2)
         return ingame_rating
-
-my_profile = ChunithmProfile("qinmao")
-my_profile.reload_pbs()
-my_profile.get_naive_rating()

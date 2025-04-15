@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 import os
 import json
-from .gamelist import game_list
+from cogs.GameSpecs.gamelist import game_list
 
 
 parentPath = os.path.dirname(os.path.abspath(__file__))

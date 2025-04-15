@@ -1,4 +1,9 @@
 import requests
+from gamelist import game_list
+
+top_amount = game_list["maimai"]["pb_amount_in_top"]
+old_amount = game_list["maimai"]["pb_amount_in_old"]
+new_amount = game_list["maimai"]["pb_amount_in_new"]
 
 def is_latest_ver_chart(chart):
     return (chart["data"]["displayVersion"] == "maimaiでらっくす PRISM PLUS")
@@ -42,13 +47,13 @@ class MaimaiDXProfile:
         
         if is_latest_ver_chart(chart):
             self.best_new.append(MaimaiDXScore(score, songid, songname, diff, internal_level, rating, lamp))
-            self.best_new = sorted(self.best_new, key=lambda x: x.rating, reverse=True)[:15]
+            self.best_new = sorted(self.best_new, key=lambda x: x.rating, reverse=True)[:new_amount]
         else:
             self.best_old.append(MaimaiDXScore(score, songid, songname, diff, internal_level, rating, lamp))
-            self.best_old = sorted(self.best_old, key=lambda x: x.rating, reverse=True)[:35]
+            self.best_old = sorted(self.best_old, key=lambda x: x.rating, reverse=True)[:old_amount]
             
         self.best_naive.append(MaimaiDXScore(score, songid, songname, diff, internal_level, rating, lamp))
-        self.best_naive = sorted(self.best_naive, key=lambda x: x.rating, reverse=True)[:50]
+        self.best_naive = sorted(self.best_naive, key=lambda x: x.rating, reverse=True)[:top_amount]
 
     def reload_pbs(self):
         try:
@@ -95,7 +100,3 @@ class MaimaiDXProfile:
 
         ingame_rating = new_rating + old_rating
         return ingame_rating
-
-my_profile = MaimaiDXProfile("qinmao")
-my_profile.reload_pbs()
-my_profile.get_ingame_rating()
