@@ -116,4 +116,4 @@ class ChunithmProfile:
 
 my_profile = ChunithmProfile("qinmao")
 my_profile.reload_pbs()
-my_profile.get_naive_rating()
+my_profile.get_ingame_rating()

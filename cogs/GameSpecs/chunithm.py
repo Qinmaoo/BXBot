@@ -1,5 +1,5 @@
 import requests
-from gamelist import game_list
+from cogs.GameSpecs.gamelist import game_list
 
 top_amount = game_list["chunithm"]["pb_amount_in_top"]
 old_amount = game_list["chunithm"]["pb_amount_in_old"]
@@ -55,6 +55,9 @@ class ChunithmProfile:
         self.best_naive = sorted(self.best_naive, key=lambda x: x.rating, reverse=True)[:top_amount]
 
     def reload_pbs(self):
+        self.best_old = []
+        self.best_new = []
+        self.best_naive = []
         try:
             response = requests.get(self.api_url)
             data = response.json()

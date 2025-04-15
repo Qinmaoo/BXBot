@@ -32,10 +32,8 @@ class MyBot(commands.Bot):
         # Synchronisation des commandes
         try:
             if SERVER_ID:
-                guild = discord.Object(id=int(SERVER_ID))
-                self.tree.clear_commands(guild=guild)
-                guild_commands = await self.tree.sync(guild=guild)
-                print(f"{len(guild_commands)} commandes synchronisées pour le serveur {SERVER_ID}")
+                self.tree.clear_commands(guild=discord.Object(id=int(SERVER_ID)))  # purge les commandes guild
+                await self.tree.sync(guild=discord.Object(id=int(SERVER_ID)))  # resync propre
             else:
                 global_commands = await self.tree.sync()
                 print(f"{len(global_commands)} commandes synchronisées globalement")

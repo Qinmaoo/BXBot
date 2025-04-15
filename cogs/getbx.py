@@ -7,6 +7,7 @@ from cogs.GameSpecs.gamelist import game_list
 from cogs.GameSpecs.chunithm import ChunithmProfile
 from cogs.GameSpecs.maimaidx import MaimaiDXProfile
 from typing import Optional
+import sys
 
 parentPath = os.path.dirname(os.path.abspath(__file__))
 supported_games = list(game_list.keys())
@@ -88,10 +89,14 @@ class GetBX(commands.Cog):
 
         for fieldname, fieldvalue in data.items():
             if fieldname == "rating":
-                embed.add_field(name=game_list[game_name]["rating_name"], value=fieldvalue, inline=False)
+                if game_name == "chunithm":
+                    embed.add_field(name=game_list[game_name]["rating_name"], value=f"{fieldvalue:.2f}", inline=False)
+                else:
+                    embed.add_field(name=game_list[game_name]["rating_name"], value=fieldvalue, inline=False)
             else:
                 fieldvalue = "\n".join(fieldvalue)
                 print(len(fieldvalue))
+                print(fieldvalue)
                 # embed.add_field(name=fieldname, value=fieldvalue, inline=False)
             
 

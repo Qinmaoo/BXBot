@@ -1,9 +1,9 @@
 import requests
-from gamelist import game_list
+from cogs.GameSpecs.gamelist import game_list
 
-top_amount = game_list["maimai"]["pb_amount_in_top"]
-old_amount = game_list["maimai"]["pb_amount_in_old"]
-new_amount = game_list["maimai"]["pb_amount_in_new"]
+top_amount = game_list["maimaidx"]["pb_amount_in_top"]
+old_amount = game_list["maimaidx"]["pb_amount_in_old"]
+new_amount = game_list["maimaidx"]["pb_amount_in_new"]
 
 def is_latest_ver_chart(chart):
     return (chart["data"]["displayVersion"] == "maimaiでらっくす PRISM PLUS")
@@ -56,6 +56,9 @@ class MaimaiDXProfile:
         self.best_naive = sorted(self.best_naive, key=lambda x: x.rating, reverse=True)[:top_amount]
 
     def reload_pbs(self):
+        self.best_old = []
+        self.best_new = []
+        self.best_naive = []
         try:
             response = requests.get(self.api_url)
             data = response.json()
