@@ -1,0 +1,4 @@
+.env
+cogs/__pycache__/*
+__pycache__/*
+cogs/GameSpecs/__pycache__/*
