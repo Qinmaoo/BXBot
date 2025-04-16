@@ -1,8 +1,19 @@
-import requests
+import requests, json
+import re
+from gamelist import game_list
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+from io import BytesIO  
 
 def is_latest_ver_chart(chart):
     return (chart["data"]["displayVersion"] == "maimaiでらっくす PRISM PLUS")
-    
+
+difficulty_to_color = {
+    "Basic":"green",
+    "Advanced":"yellow",
+    "Expert":"red",
+    "Master":"purple",
+    "Re:Master":"#CBC3E3",
+}
 class MaimaiDXScore:
     def __init__(self, score, songid, songname, diff, internal_level, rating, lamp):
         self.score = score
@@ -111,7 +122,143 @@ class MaimaiDXProfile:
 
         ingame_rating = new_rating + old_rating
         print(f"In-game rating: {ingame_rating}")
+        return ingame_rating
 
+    def get_card(self, player_username, best_type="naive"):
+        background = Image.open(f"cogs/assets/scorecard_template/chunithm_{best_type}.png").convert("RGBA")     ##TODO faire le bg maimai et changer
+        
+        print("loading game data covers")
+        with open("cogs/GameSpecs/covers/maimaidx.json", encoding="utf-8") as f:
+            songs_data = json.load(f)
+        print("game data loaded")
+        
+        font_upper = ImageFont.truetype("cogs/assets/fonts/FugazOne-Regular.ttf", 36)
+        draw = ImageDraw.Draw(background)
+        
+        def edit_image(best, initial_x, intial_y, spacing_x, spacing_y, length_size_x, length_size_y, border_size):
+            i=1
+            x, y = initial_x, intial_y
+            for score in best:
+                safe_songname = re.sub(r'[<>:"/\\|?*\n\r\t]', '_', score.songname)
+                try:
+                    overlay_image = Image.open(f'cogs/GameSpecs/covers/maimaidx/{safe_songname}.png').convert("RGBA")
+                except FileNotFoundError:
+                    print("Fetching cover for", score)
+                    image_url = songs_data[score.songname]["cover"]
+                    img_data = requests.get(image_url).content
+                    with open(f"cogs/GameSpecs/covers/maimaidx/{safe_songname}.png", 'wb') as handler:
+                        handler.write(img_data)
+                    overlay_image = Image.open(f'cogs/GameSpecs/covers/maimaidx/{safe_songname}.png').convert("RGBA")
+                    
+                overlay_image = overlay_image.resize((length_size_x, length_size_y))
+                overlay_image = ImageOps.expand(overlay_image, border=border_size, fill=difficulty_to_color[score.diff.split(" ")[-1]])
+                
+                background.paste(overlay_image, (x-border_size, y-border_size), overlay_image)
+
+                font_position = ImageFont.truetype("cogs/assets/fonts/Montserrat-Black.ttf", 23)
+                font_rating = ImageFont.truetype("cogs/assets/fonts/Montserrat-Black.ttf", 18)
+                font_title = ImageFont.truetype("cogs/assets/fonts/Source-Han-Sans-CN-Bold.otf", 18)
+                font_score = ImageFont.truetype("cogs/assets/fonts/Montserrat-SemiBold.ttf", 20)
+                
+                
+                #Position display
+                content = f"#{i}"
+                bbox = draw.textbbox((0, 0), content, font=font_position)
+                text_width = bbox[2] - bbox[0]
+
+                rect_x1, rect_x2 = x-61, x-5
+                text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
+                draw.text((text_x, y), content, fill="white", font=font_position)
+                
+                #CC display
+                content = f"{score.internal_level:.1f}"
+                bbox = draw.textbbox((0, 0), content, font=font_rating)
+                text_width = bbox[2] - bbox[0]
+
+                rect_x1, rect_x2 = x-61, x-5
+                text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
+                draw.text((text_x, y+42), content, fill="white", font=font_rating)
+                
+                # Triangle downwards
+                triangle = [(x-40, y+68), (x-25, y+68), (x-32, y+78)]
+
+                draw.polygon(triangle, fill="white")
+                
+                #Rating display
+                content = f"{score.rating}"
+                bbox = draw.textbbox((0, 0), content, font=font_rating)
+                text_width = bbox[2] - bbox[0]
+
+                rect_x1, rect_x2 = x-61, x-5
+                text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
+                draw.text((text_x, y+83), content, fill="white", font=font_rating)
+                
+                # Score display
+                score_amount = f"{score.score}"
+                bbox = font_title.getbbox(score_amount)
+                text_width = bbox[2] - bbox[0]
+                text_height = bbox[3] - bbox[1]
+                
+                text_x = x+23 + (x+length_size_x - (x+23) - text_width) / 2
+                text_y = y+72 + (y+100 - (y+72) - text_height) / 2 - 5
+                
+                draw.rectangle([(x+23, y+72), (x+length_size_x, y+100)], fill=(0, 0, 0))
+                draw.text((text_x, text_y), score_amount, fill="white", font=font_score)
+                
+                
+                # Title length cropping if necessary
+                songname = score.songname
+                
+                bbox = font_title.getbbox(songname)
+                text_width = bbox[2] - bbox[0]
+                while text_width > 180:
+                    songname = songname[:-1]
+                    bbox = font_title.getbbox(songname)
+                    text_width = bbox[2] - bbox[0]
+                
+                text_x = x - 61 + (182 - text_width) / 2
+                
+                draw.rectangle([(x-61, y+126), (x+length_size_x + border_size + 2, y+127)], fill="white")    #Separator
+                draw.text((text_x, y+132), f"{songname}", fill="white", font=font_title)
+
+                if i%5 == 0: 
+                    x = 115
+                    y += spacing_y + length_size_y
+                else:
+                    x += spacing_x + length_size_x
+                i+=1
+        
+        spacing_x, spacing_y = 80, 54
+        length_size_x, length_size_y = 115, 115
+        border_size = 5  
+              
+        if best_type == "naive":
+            # Player, ratings
+            content = f"{player_username} - {self.get_naive_rating()}"
+            bbox = draw.textbbox((0, 0), content, font=font_upper)
+            text_width = bbox[2] - bbox[0]
+
+            rect_x1, rect_x2 = 254, 886
+            text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
+            draw.text((text_x, 100), content, fill="white", font=font_upper, stroke_width=3, stroke_fill="black")
+            edit_image(self.best_naive, 115, 177, spacing_x, spacing_y, length_size_x, length_size_y, border_size)
+        
+        elif best_type == "ingame":
+            # Player, ratings
+            content = f"{player_username} - {self.get_ingame_rating()}rt (Old {self.get_old_rating()} / New {self.get_new_rating()})"
+            bbox = draw.textbbox((0, 0), content, font=font_upper)
+            text_width = bbox[2] - bbox[0]
+
+            rect_x1, rect_x2 = 254, 886
+            text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
+            draw.text((text_x, 100), content, fill="white", font=font_upper, stroke_width=3, stroke_fill="black")
+            edit_image(self.best_old, 115, 177, spacing_x, spacing_y, length_size_x, length_size_y, border_size)
+            edit_image(self.best_new, 115, 1235, spacing_x, spacing_y, length_size_x, length_size_y, border_size)
+            
+        background.save(f"scorecard_output/resultat_{best_type}_maimaidx_{player_username}.png")
+   
 my_profile = MaimaiDXProfile("qinmao")
 my_profile.reload_pbs()
-my_profile.get_ingame_rating()
+
+my_profile.get_card("Qinmao", "naive")
+my_profile.get_card("Qinmao", "ingame")

@@ -1,5 +1,7 @@
-import requests
+import requests, json
 from cogs.GameSpecs.gamelist import game_list
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO  
 
 top_amount = game_list["chunithm"]["pb_amount_in_top"]
 old_amount = game_list["chunithm"]["pb_amount_in_old"]
@@ -105,3 +107,32 @@ class ChunithmProfile:
 
         ingame_rating = round((new_rating*new_amount + old_rating*old_amount)/50,2)
         return ingame_rating
+    
+    def get_card(self, best_type="naive"):
+        background = Image.open(f"cogs/GameSpecs/assets/scorecard_template/chunithm_{best_type}.png").convert("RGBA")
+        with open("cogs/GameSpecs/covers/chunithm.json") as f:
+            songs_data = json.load()
+            
+        if best_type == "naive":
+            pass
+        elif best_type == "ingame":
+            for score in self.best_old:
+                # 2️⃣ Charger une image depuis une URL
+                image_url = songs_data[score.songname]["cover"]
+                response = requests.get(image_url)
+                overlay_image = Image.open(BytesIO(response.content)).convert("RGBA")
+
+                # 4️⃣ Coller l'image téléchargée sur l'image de fond
+                background.paste(overlay_image, (50, 50), overlay_image)
+
+                # 5️⃣ Ajouter du texte
+                draw = ImageDraw.Draw(background)
+
+                # Charger une police (à adapter avec un chemin valide ou une police système)
+                font = ImageFont.truetype("cogs/assets/fonts/Exo-medium.ttf", 40)
+
+                # Ajouter le texte
+                draw.text((200, 50), "Hello World!", fill="white", font=font)
+
+                # 6️⃣ Sauvegarder le résultat
+        background.save("resultat.png")
