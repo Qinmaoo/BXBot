@@ -10,7 +10,6 @@ from typing import Optional
 import sys, io
 
 parentPath = os.path.dirname(os.path.abspath(__file__))
-supported_games = list(game_list.keys())
 best_types = {"ingame":"In-game","naive":"Naive"}
 
 

@@ -285,7 +285,7 @@ if __name__ == "__main__":
     background_naive.save(f"scorecard_output/resultat_naive_chunithm_Qinmao.png")
     background_ingame.save(f"scorecard_output/resultat_ingame_chunithm_Qinmao.png")
 
-else:  
+else:
     from cogs.GameSpecs.gamelist import game_list
     top_amount = game_list["chunithm"]["pb_amount_in_top"]
     old_amount = game_list["chunithm"]["pb_amount_in_old"]
