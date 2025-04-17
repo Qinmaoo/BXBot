@@ -7,14 +7,14 @@ from cogs.GameSpecs.gamelist import game_list
 from cogs.GameSpecs.chunithm import ChunithmProfile
 from cogs.GameSpecs.maimaidx import MaimaiDXProfile
 from typing import Optional
-import sys
+import sys, io
 
 parentPath = os.path.dirname(os.path.abspath(__file__))
 supported_games = list(game_list.keys())
 best_types = {"ingame":"In-game","naive":"Naive"}
 
 
-def get_best_x(game, ratingType, id):
+def get_best_x(game, ratingType, username, id):
     path = parentPath+f"/profiles/{id}.json"
     
     if os.path.exists(path):
@@ -34,21 +34,8 @@ def get_best_x(game, ratingType, id):
             
             game_profile.reload_pbs()
             
-            
-            if ratingType == "naive":
-                best = game_profile.best_naive
-                rating = game_profile.get_naive_rating()
-                
-                output = {"rating":rating, "best":[str(score) for score in best]}
-                return output, "Done!"
-            
-            elif ratingType == "ingame":
-                best_old = game_profile.best_old
-                best_new = game_profile.best_new
-                rating = game_profile.get_ingame_rating()
-                
-                output = {"rating":rating, "best_old":[str(score) for score in best_old], "best_new": [str(score) for score in best_new]}
-                return output, "Done!"
+            background = game_profile.get_card(username, ratingType)
+            return background, "Done!"
                     
     else:
         return {}, "Please register first."
@@ -83,24 +70,20 @@ class GetBX(commands.Cog):
         game_name = game_name.value
         best_type = best_type.value if best_type else "naive"
                 
-        data, answer = get_best_x(game_name, best_type, id)
+        data, answer = get_best_x(game_name, best_type, name, id)
+        if data == {}:
+            await interaction.response.send_message(answer)
+        else:
+            buffer = io.BytesIO()
+            data.save(buffer, format="PNG")
+            buffer.seek(0)
 
-        embed=discord.Embed(title=f"{name}\'s {game_list[game_name]['display_name']} best {game_list[game_name]['pb_amount_in_top']} ({best_types[best_type]})")
+            # Envoi avec un embed et un fichier discord.File
+            file = discord.File(buffer, filename="image.png")
+            embed=discord.Embed(title=f"{name}\'s {game_list[game_name]['display_name']} best {game_list[game_name]['pb_amount_in_top']} ({best_types[best_type]})")
+            embed.set_image(url="attachment://image.png")
 
-        for fieldname, fieldvalue in data.items():
-            if fieldname == "rating":
-                if game_name == "chunithm":
-                    embed.add_field(name=game_list[game_name]["rating_name"], value=f"{fieldvalue:.2f}", inline=False)
-                else:
-                    embed.add_field(name=game_list[game_name]["rating_name"], value=fieldvalue, inline=False)
-            else:
-                fieldvalue = "\n".join(fieldvalue)
-                print(len(fieldvalue))
-                print(fieldvalue)
-                # embed.add_field(name=fieldname, value=fieldvalue, inline=False)
-            
-
-        await interaction.response.send_message(embed=embed)
+            await interaction.response.send_message(embed=embed, files=[file])
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(GetBX(bot))

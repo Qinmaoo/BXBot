@@ -125,7 +125,7 @@ class MaimaiDXProfile:
         return ingame_rating
 
     def get_card(self, player_username, best_type="naive"):
-        background = Image.open(f"cogs/assets/scorecard_template/chunithm_{best_type}.png").convert("RGBA")     ##TODO faire le bg maimai et changer
+        background = Image.open(f"cogs/assets/scorecard_template/maimaidx_{best_type}.png").convert("RGBA")     ##TODO faire le bg maimai et changer
         
         print("loading game data covers")
         with open("cogs/GameSpecs/covers/maimaidx.json", encoding="utf-8") as f:
@@ -149,12 +149,14 @@ class MaimaiDXProfile:
                     with open(f"cogs/GameSpecs/covers/maimaidx/{safe_songname}.png", 'wb') as handler:
                         handler.write(img_data)
                     overlay_image = Image.open(f'cogs/GameSpecs/covers/maimaidx/{safe_songname}.png').convert("RGBA")
-                    
+                
+                border_color = difficulty_to_color[score.diff.split(" ")[-1]]
                 overlay_image = overlay_image.resize((length_size_x, length_size_y))
-                overlay_image = ImageOps.expand(overlay_image, border=border_size, fill=difficulty_to_color[score.diff.split(" ")[-1]])
+                overlay_image = ImageOps.expand(overlay_image, border=border_size, fill=border_color)
                 
                 background.paste(overlay_image, (x-border_size, y-border_size), overlay_image)
-
+                draw.polygon([(x, y), (x+20, y), (x, y+20)], fill=border_color)
+                
                 font_position = ImageFont.truetype("cogs/assets/fonts/Montserrat-Black.ttf", 23)
                 font_rating = ImageFont.truetype("cogs/assets/fonts/Montserrat-Black.ttf", 18)
                 font_title = ImageFont.truetype("cogs/assets/fonts/Source-Han-Sans-CN-Bold.otf", 18)
@@ -194,7 +196,7 @@ class MaimaiDXProfile:
                 draw.text((text_x, y+83), content, fill="white", font=font_rating)
                 
                 # Score display
-                score_amount = f"{score.score}"
+                score_amount = f"{score.score:.4f}"
                 bbox = font_title.getbbox(score_amount)
                 text_width = bbox[2] - bbox[0]
                 text_height = bbox[3] - bbox[1]
@@ -234,11 +236,11 @@ class MaimaiDXProfile:
               
         if best_type == "naive":
             # Player, ratings
-            content = f"{player_username} - {self.get_naive_rating()}"
+            content = f"{player_username} - {self.get_naive_rating()}rt"
             bbox = draw.textbbox((0, 0), content, font=font_upper)
             text_width = bbox[2] - bbox[0]
 
-            rect_x1, rect_x2 = 254, 886
+            rect_x1, rect_x2 = 314, 936
             text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
             draw.text((text_x, 100), content, fill="white", font=font_upper, stroke_width=3, stroke_fill="black")
             edit_image(self.best_naive, 115, 177, spacing_x, spacing_y, length_size_x, length_size_y, border_size)
@@ -249,11 +251,11 @@ class MaimaiDXProfile:
             bbox = draw.textbbox((0, 0), content, font=font_upper)
             text_width = bbox[2] - bbox[0]
 
-            rect_x1, rect_x2 = 254, 886
+            rect_x1, rect_x2 = 314, 936
             text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
             draw.text((text_x, 100), content, fill="white", font=font_upper, stroke_width=3, stroke_fill="black")
             edit_image(self.best_old, 115, 177, spacing_x, spacing_y, length_size_x, length_size_y, border_size)
-            edit_image(self.best_new, 115, 1235, spacing_x, spacing_y, length_size_x, length_size_y, border_size)
+            edit_image(self.best_new, 115, 1402, spacing_x, spacing_y, length_size_x, length_size_y, border_size)
             
         background.save(f"scorecard_output/resultat_{best_type}_maimaidx_{player_username}.png")
    

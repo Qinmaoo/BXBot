@@ -154,12 +154,13 @@ class ChunithmProfile:
                     with open(f"cogs/GameSpecs/covers/chunithm/{safe_songname}.png", 'wb') as handler:
                         handler.write(img_data)
                     overlay_image = Image.open(f'cogs/GameSpecs/covers/chunithm/{safe_songname}.png').convert("RGBA")
-                    
+                border_color = difficulty_to_color[score.diff]
                 overlay_image = overlay_image.resize((length_size_x, length_size_y))
-                overlay_image = ImageOps.expand(overlay_image, border=border_size, fill=difficulty_to_color[score.diff])
+                overlay_image = ImageOps.expand(overlay_image, border=border_size, fill=border_color)
                 
                 background.paste(overlay_image, (x-border_size, y-border_size), overlay_image)
-
+                draw.polygon([(x, y), (x+20, y), (x, y+20)], fill=border_color)
+                
                 font_position = ImageFont.truetype("cogs/assets/fonts/Montserrat-Black.ttf", 23)
                 font_rating = ImageFont.truetype("cogs/assets/fonts/Montserrat-Black.ttf", 18)
                 font_title = ImageFont.truetype("cogs/assets/fonts/Source-Han-Sans-CN-Bold.otf", 18)
@@ -223,7 +224,7 @@ class ChunithmProfile:
                 
                 text_x = x - 61 + (182 - text_width) / 2
                 
-                draw.rectangle([(x-61, y+126), (x+length_size_x + border_size + 2, y+127)], fill="white")    #Separator
+                # draw.rectangle([(x-61, y+126), (x+length_size_x + border_size + 2, y+127)], fill="white")    #Separator
                 draw.text((text_x, y+132), f"{songname}", fill="white", font=font_title)
 
                 if i%5 == 0: 
@@ -239,7 +240,7 @@ class ChunithmProfile:
               
         if best_type == "naive":
             # Player, ratings
-            content = f"{player_username} - {self.get_naive_rating():.2f}"
+            content = f"{player_username} - {self.get_naive_rating():.2f}rt"
             bbox = draw.textbbox((0, 0), content, font=font_upper)
             text_width = bbox[2] - bbox[0]
 
