@@ -1,12 +1,9 @@
 import requests, json
 import re
-from cogs.GameSpecs.gamelist import game_list
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from io import BytesIO  
 
-top_amount = game_list["chunithm"]["pb_amount_in_top"]
-old_amount = game_list["chunithm"]["pb_amount_in_old"]
-new_amount = game_list["chunithm"]["pb_amount_in_new"]
+
 
 def is_latest_ver(chart):
         versions = chart.get("versions", [])
@@ -22,6 +19,15 @@ difficulty_to_color = {
     "MASTER":"purple",
     "ULTIMA":"black",
 }
+
+def get_grade_color(grade):
+    if grade == "SSS+": return "#de5bdc"
+    if grade == "SSS": return "#f2f55f"
+    if grade == "SS+": return "#e3a54d"
+    if grade == "SS": return "#e3a54d"
+    if grade == "S+": return "#e3a54d"
+    if grade == "S": return "#e3a54d"
+    return "white"
 
 class ChunithmScore:
     def __init__(self, score, songid, songname, diff, internal_level, rating, lamp, grade=""):
@@ -154,34 +160,33 @@ class ChunithmProfile:
                 overlay_image = ImageOps.expand(overlay_image, border=border_size, fill=border_color)
                 
                 background.paste(overlay_image, (x-border_size, y-border_size), overlay_image)
-                draw.polygon([(x, y), (x+20, y), (x, y+20)], fill=border_color)
+                draw.rectangle([(x, y), (x+38,y+25)], fill=border_color)
                 
                 font_position = ImageFont.truetype("cogs/assets/fonts/Montserrat-Black.ttf", 23)
                 font_rating = ImageFont.truetype("cogs/assets/fonts/Montserrat-Black.ttf", 18)
                 font_title = ImageFont.truetype("cogs/assets/fonts/Source-Han-Sans-CN-Bold.otf", 18)
                 font_score = ImageFont.truetype("cogs/assets/fonts/din-condensed-bold.ttf", 21)
                 
+                #CC display
+                content = f"{score.internal_level:.1f}"
+                bbox = draw.textbbox((0, 0), content, font=font_rating)
+                text_width = bbox[2] - bbox[0]
+
+                rect_x1, rect_x2 = x-border_size, x+38
+                text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
+                draw.text((text_x, y), content, fill="white", font=font_rating)
                 
                 #Position display
                 content = f"#{i}"
                 bbox = draw.textbbox((0, 0), content, font=font_position)
                 text_width = bbox[2] - bbox[0]
 
-                rect_x1, rect_x2 = x-61, x-5
+                rect_x1, rect_x2 = x-65, x-5
                 text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
                 draw.text((text_x, y), content, fill="white", font=font_position)
                 
-                #CC display
-                content = f"{score.internal_level:.1f}"
-                bbox = draw.textbbox((0, 0), content, font=font_rating)
-                text_width = bbox[2] - bbox[0]
-
-                rect_x1, rect_x2 = x-61, x-5
-                text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
-                draw.text((text_x, y+42), content, fill="white", font=font_rating)
-                
                 # Triangle downwards
-                triangle = [(x-40, y+68), (x-25, y+68), (x-32, y+78)]
+                triangle = [(x-40, y+35), (x-30, y+35), (x-35, y+45)]
 
                 draw.polygon(triangle, fill="white")
                 
@@ -190,18 +195,24 @@ class ChunithmProfile:
                 bbox = draw.textbbox((0, 0), content, font=font_rating)
                 text_width = bbox[2] - bbox[0]
 
-                rect_x1, rect_x2 = x-61, x-5
+                rect_x1, rect_x2 = x-65, x-5
                 text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
-                draw.text((text_x, y+83), content, fill="white", font=font_rating)
+                draw.text((text_x, y+53), content, fill="white", font=font_rating)
                 
                 # Score display
                 score_amount = f"{score.score}"
+                grade = score.grade
+                
+                grade_width, _ = draw.textbbox((0, 0), grade, font=font_score)[2:]
                 text_width, _ = draw.textbbox((0, 0), score_amount, font=font_score)[2:]
 
                 x_right = x + length_size_x - text_width - 3
-
+                
+                grade_rect_x1, grade_rect_x2 = x+18, x_right
+                grade_text_x = grade_rect_x1 + (grade_rect_x2 - grade_rect_x1 - grade_width) / 2
+                
                 draw.rectangle([(x+15, y+72), (x+length_size_x, y+100)], fill=(0, 0, 0))
-                draw.text((x+18, y+80), score.grade, fill="white", font=font_score)
+                draw.text((grade_text_x, y+80), grade, fill=get_grade_color(grade), font=font_score)
                 draw.text((x_right, y+80), score_amount, fill="white", font=font_score)
                 
                 
@@ -214,11 +225,15 @@ class ChunithmProfile:
                     songname = songname[:-1]
                     bbox = font_title.getbbox(songname)
                     text_width = bbox[2] - bbox[0]
+                    
+                # if text_width <= 115:
+                #     text_x = x + (115 - text_width) / 2
+                # else:
+                #     text_x = x - 61 + (182 - text_width) / 2
+                text_x = x - 61 + 182 - text_width
                 
-                text_x = x - 61 + (182 - text_width) / 2
-                
-                draw.rectangle([(x-61, y+126), (x+length_size_x + border_size + 2, y+127)], fill="white")    #Separator
-                draw.text((text_x, y+132), f"{songname}", fill="white", font=font_title)
+                draw.text((text_x, y+126), f"{songname}", fill="white", font=font_title)
+                draw.rectangle([(x-61, y+148), (x+length_size_x + border_size + 2, y+149)], fill="white")    #Separator
 
                 if i%5 == 0: 
                     x = 115
@@ -255,3 +270,23 @@ class ChunithmProfile:
             edit_image(self.best_new, 115, 1235, spacing_x, spacing_y, length_size_x, length_size_y, border_size)
         
         return background
+    
+
+if __name__ == "__main__":
+    from gamelist import game_list
+    top_amount = game_list["chunithm"]["pb_amount_in_top"]
+    old_amount = game_list["chunithm"]["pb_amount_in_old"]
+    new_amount = game_list["chunithm"]["pb_amount_in_new"]
+    
+    my_profile = ChunithmProfile("qinmao")
+    my_profile.reload_pbs()
+    background_naive = my_profile.get_card("Qinmao", "naive")
+    background_ingame = my_profile.get_card("Qinmao", "ingame")
+    background_naive.save(f"scorecard_output/resultat_naive_chunithm_Qinmao.png")
+    background_ingame.save(f"scorecard_output/resultat_ingame_chunithm_Qinmao.png")
+
+else:  
+    from cogs.GameSpecs.gamelist import game_list
+    top_amount = game_list["chunithm"]["pb_amount_in_top"]
+    old_amount = game_list["chunithm"]["pb_amount_in_old"]
+    new_amount = game_list["chunithm"]["pb_amount_in_new"]
