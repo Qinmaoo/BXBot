@@ -272,9 +272,9 @@ class MaimaiDXProfile:
 
 if __name__ == "__main__":
     from gamelist import game_list
-    top_amount = game_list["chunithm"]["pb_amount_in_top"]
-    old_amount = game_list["chunithm"]["pb_amount_in_old"]
-    new_amount = game_list["chunithm"]["pb_amount_in_new"]
+    top_amount = game_list["maimaidx"]["pb_amount_in_top"]
+    old_amount = game_list["maimaidx"]["pb_amount_in_old"]
+    new_amount = game_list["maimaidx"]["pb_amount_in_new"]
     
     my_profile = MaimaiDXProfile("qinmao")
     my_profile.reload_pbs()
@@ -285,7 +285,7 @@ if __name__ == "__main__":
 
 else:  
     from cogs.GameSpecs.gamelist import game_list
-    top_amount = game_list["chunithm"]["pb_amount_in_top"]
-    old_amount = game_list["chunithm"]["pb_amount_in_old"]
-    new_amount = game_list["chunithm"]["pb_amount_in_new"]
+    top_amount = game_list["maimaidx"]["pb_amount_in_top"]
+    old_amount = game_list["maimaidx"]["pb_amount_in_old"]
+    new_amount = game_list["maimaidx"]["pb_amount_in_new"]
     
