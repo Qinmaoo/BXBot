@@ -4,5 +4,5 @@ __pycache__/*
 cogs/GameSpecs/__pycache__/*
 cogs/GameSpecs/covers/*/
 scorecard_output/*
-console vers/__pycache__/*
 venv/*
+.vscode/*
