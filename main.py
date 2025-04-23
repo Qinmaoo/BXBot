@@ -14,8 +14,7 @@ class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(
             command_prefix="$",
-            intents=discord.Intents.all(),
-            application_id = APP_ID
+            intents=discord.Intents.all()
         )
 
         self.initial_extensions = ["cogs.register", "cogs.kamai","cogs.getbx"]
@@ -33,12 +32,8 @@ class MyBot(commands.Bot):
 
         # Synchronisation des commandes
         try:
-            if SERVER_ID:
-                self.tree.clear_commands(guild=discord.Object(id=int(SERVER_ID)))  # purge les commandes guild
-                await self.tree.sync(guild=discord.Object(id=int(SERVER_ID)))  # resync propre
-            else:
-                global_commands = await self.tree.sync()
-                print(f"{len(global_commands)} commandes synchronisées globalement")
+            global_commands = await self.tree.sync()
+            print(f"{len(global_commands)} commandes synchronisées globalement")
         except Exception as e:
             print(f"Erreur lors de la synchronisation : {e}")
 
