@@ -2,8 +2,7 @@
 cogs/__pycache__/*
 __pycache__/*
 cogs/GameSpecs/__pycache__/*
-cogs/GameSpecs/covers/*
+cogs/GameSpecs/covers/*/
 scorecard_output/*
-cogs/assets/fonts/*
 console vers/__pycache__/*
 venv/*

@@ -2,6 +2,7 @@ import requests, json
 import re
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from io import BytesIO  
+import os
 
 def is_latest_ver(chart):
     return (chart["data"]["displayVersion"] == "maimaiでらっくす PRISM PLUS")
@@ -138,15 +139,20 @@ class MaimaiDXProfile:
             x, y = initial_x, intial_y
             for score in best:
                 safe_songname = re.sub(r'[<>:"/\\|?*\n\r\t]', '_', score.songname)
+                cover_folder_path = "cogs/GameSpecs/covers/maimaidx"
+                
+                if not os.path.isdir(cover_folder_path):
+                    os.makedirs(cover_folder_path)
+                    
                 try:
-                    overlay_image = Image.open(f'cogs/GameSpecs/covers/maimaidx/{safe_songname}.png').convert("RGBA")
+                    overlay_image = Image.open(f'{cover_folder_path}/{safe_songname}.png').convert("RGBA")
                 except FileNotFoundError:
                     print("Fetching cover for", score)
                     image_url = songs_data[score.songname]["cover"]
                     img_data = requests.get(image_url).content
-                    with open(f"cogs/GameSpecs/covers/maimaidx/{safe_songname}.png", 'wb') as handler:
+                    with open(f"{cover_folder_path}/{safe_songname}.png", 'wb') as handler:
                         handler.write(img_data)
-                    overlay_image = Image.open(f'cogs/GameSpecs/covers/maimaidx/{safe_songname}.png').convert("RGBA")
+                    overlay_image = Image.open(f'{cover_folder_path}/{safe_songname}.png').convert("RGBA")
                 
                 border_color = difficulty_to_color[score.diff.split(" ")[-1]]
                 overlay_image = overlay_image.resize((length_size_x, length_size_y))
