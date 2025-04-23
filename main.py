@@ -7,13 +7,15 @@ import os
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SERVER_ID = os.getenv("SERVER_ID")
+APP_ID = os.getenv("APP_ID")
+
 class MyBot(commands.Bot):
 
     def __init__(self):
         super().__init__(
             command_prefix="$",
             intents=discord.Intents.all(),
-            application_id = 1091031271402127361
+            application_id = APP_ID
         )
 
         self.initial_extensions = ["cogs.register", "cogs.kamai","cogs.getbx"]
@@ -39,9 +41,6 @@ class MyBot(commands.Bot):
                 print(f"{len(global_commands)} commandes synchronisées globalement")
         except Exception as e:
             print(f"Erreur lors de la synchronisation : {e}")
-
-
-
 
     async def on_ready(self):
         for guild in self.guilds:

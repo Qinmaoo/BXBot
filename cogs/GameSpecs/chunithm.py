@@ -278,12 +278,14 @@ if __name__ == "__main__":
     old_amount = game_list["chunithm"]["pb_amount_in_old"]
     new_amount = game_list["chunithm"]["pb_amount_in_new"]
     
-    my_profile = ChunithmProfile("qinmao")
+    kamai_username = "nenes"
+    display_username = "Nenes"
+    my_profile = ChunithmProfile(kamai_username)
     my_profile.reload_pbs()
-    background_naive = my_profile.get_card("Qinmao", "naive")
-    background_ingame = my_profile.get_card("Qinmao", "ingame")
-    background_naive.save(f"scorecard_output/resultat_naive_chunithm_Qinmao.png")
-    background_ingame.save(f"scorecard_output/resultat_ingame_chunithm_Qinmao.png")
+    background_naive = my_profile.get_card(display_username, "naive")
+    background_ingame = my_profile.get_card(display_username, "ingame")
+    background_naive.save(f"scorecard_output/resultat_naive_chunithm_{display_username}.png")
+    background_ingame.save(f"scorecard_output/resultat_ingame_chunithm_{display_username}.png")
 
 else:
     from cogs.GameSpecs.gamelist import game_list

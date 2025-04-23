@@ -6,3 +6,4 @@ cogs/GameSpecs/covers/*
 scorecard_output/*
 cogs/assets/fonts/*
 console vers/__pycache__/*
+venv/*
