@@ -75,7 +75,7 @@ class GetBX(commands.Cog):
         data, answer = get_best_x(game_name, best_type, name, id)
         
         if data == {}:
-            await interaction.followup.send(answer)  # <-- Utilise followup après defer
+            await interaction.followup.send(answer)  
         else:
             buffer = io.BytesIO()
             data.save(buffer, format="PNG")
@@ -87,7 +87,7 @@ class GetBX(commands.Cog):
             )
             embed.set_image(url="attachment://image.png")
 
-            await interaction.followup.send(embed=embed, files=[file])  # <-- Toujours followup
+            await interaction.followup.send(embed=embed, files=[file])
 
 
 async def setup(bot: commands.Bot) -> None:

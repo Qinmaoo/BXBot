@@ -30,6 +30,11 @@ def get_grade_color(grade):
     if grade == "S": return "#e3a54d"
     return "white"
 
+def get_lamp_color(lamp):
+    if lamp == "AJ": return "#f2f55f"
+    if lamp == "FC": return "#e3a54d"
+    return "white"
+
 class ChunithmScore:
     def __init__(self, score, songid, songname, diff, internal_level, rating, lamp, grade=""):
         self.score = score
@@ -205,6 +210,13 @@ class ChunithmProfile:
                 text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
                 draw.text((text_x, y+53), content, fill="white", font=font_rating)
                 
+                # Lamp display
+                if score.lamp in ['FULL COMBO', "ALL JUSTICE"]:
+                    lamp = f"{''.join([x[0] for x in score.lamp.split(' ')])}"
+                    
+                    draw.rectangle([(x + length_size_x - 25, y+40), (x+length_size_x, y+68)], fill=(0, 0, 0))
+                    draw.text((x + length_size_x - 20, y+46), lamp, fill=get_lamp_color(lamp), font=font_score)
+                
                 # Score display
                 score_amount = f"{score.score}"
                 grade = score.grade
@@ -284,12 +296,14 @@ if __name__ == "__main__":
     old_amount = game_list["chunithm"]["pb_amount_in_old"]
     new_amount = game_list["chunithm"]["pb_amount_in_new"]
     
-    kamai_username = "nenes"
-    display_username = "Nenes"
+    kamai_username = "qinmao"
+    display_username = "Qinmao"
     my_profile = ChunithmProfile(kamai_username)
     my_profile.reload_pbs()
+    
     background_naive = my_profile.get_card(display_username, "naive")
     background_ingame = my_profile.get_card(display_username, "ingame")
+    
     background_naive.save(f"scorecard_output/resultat_naive_chunithm_{display_username}.png")
     background_ingame.save(f"scorecard_output/resultat_ingame_chunithm_{display_username}.png")
 

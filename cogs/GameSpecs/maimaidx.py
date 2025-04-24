@@ -24,6 +24,11 @@ def get_grade_color(grade):
     if grade == "S": return "#e3a54d"
     return "white"
 
+def get_lamp_color(lamp):
+    if lamp == "AP": return "#f2f55f"
+    if lamp == "FC": return "#e3a54d"
+    return "white"
+
 class MaimaiDXScore:
     def __init__(self, score, songid, songname, diff, internal_level, rating, lamp, grade=""):
         self.score = score
@@ -198,6 +203,13 @@ class MaimaiDXProfile:
                 text_x = rect_x1 + (rect_x2 - rect_x1 - text_width) / 2
                 draw.text((text_x, y+53), content, fill="white", font=font_rating)
                 
+                # Lamp display
+                if score.lamp in ['FULL COMBO', "ALL PERFECT"]:
+                    lamp = f"{''.join([x[0] for x in score.lamp.split(' ')])}"
+                    
+                    draw.rectangle([(x + length_size_x - 25, y+40), (x+length_size_x, y+68)], fill=(0, 0, 0))
+                    draw.text((x + length_size_x - 20, y+46), lamp, fill=get_lamp_color(lamp), font=font_score)
+                    
                 # Score display
                 score_amount = f"{score.score:.4f}"
                 grade = score.grade
@@ -207,12 +219,12 @@ class MaimaiDXProfile:
 
                 x_right = x + length_size_x - text_width - 3
                 
-                grade_rect_x1, grade_rect_x2 = x+18, x_right
+                grade_rect_x1, grade_rect_x2 = x+12, x_right
                 grade_text_x = grade_rect_x1 + (grade_rect_x2 - grade_rect_x1 - grade_width) / 2
                 
-                draw.rectangle([(x+15, y+72), (x+length_size_x, y+100)], fill=(0, 0, 0))
-                draw.text((grade_text_x, y+80), grade, fill=get_grade_color(grade), font=font_score)
-                draw.text((x_right, y+80), score_amount, fill="white", font=font_score)
+                draw.rectangle([(x+10, y+72), (x+length_size_x, y+100)], fill=(0, 0, 0))
+                draw.text((grade_text_x, y+79), grade, fill=get_grade_color(grade), font=font_score)
+                draw.text((x_right, y+79), score_amount, fill="white", font=font_score)
                 
                 
                 # Title length cropping if necessary

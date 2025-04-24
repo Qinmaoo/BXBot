@@ -10,11 +10,14 @@ parentPath = os.path.dirname(os.path.abspath(__file__))
 supported_games = list(game_list.keys())
 
 def register_player(id):
+    folder_path =parentPath+f"/profiles"
     path = parentPath+f"/profiles/{id}.json"
     
     if os.path.exists(path):
         return "You're already registered!"
     else:
+        if not os.path.isdir(folder_path):
+            os.makedirs(folder_path)
         with open(path,"w") as f:
             out = {"profileData":{}}
             for game in supported_games:
