@@ -62,27 +62,33 @@ class GetBX(commands.Cog):
         self,
         interaction: discord.Interaction,
         game_name: app_commands.Choice[str],
-        best_type: Optional[app_commands.Choice[str]] = None) -> None:
+        best_type: Optional[app_commands.Choice[str]] = None
+    ) -> None:
         
+        await interaction.response.defer(thinking=True)  # <-- Ajout pour éviter le timeout
+
         name = interaction.user.display_name
         id = interaction.user.id
         game_name = game_name.value
         best_type = best_type.value if best_type else "naive"
-                
+        
         data, answer = get_best_x(game_name, best_type, name, id)
+        
         if data == {}:
-            await interaction.response.send_message(answer)
+            await interaction.followup.send(answer)  # <-- Utilise followup après defer
         else:
             buffer = io.BytesIO()
             data.save(buffer, format="PNG")
             buffer.seek(0)
 
-            # Envoi avec un embed et un fichier discord.File
             file = discord.File(buffer, filename="image.png")
-            embed=discord.Embed(title=f"{name}\'s {game_list[game_name]['display_name']} best {game_list[game_name]['pb_amount_in_top']} ({best_types[best_type]})")
+            embed = discord.Embed(
+                title=f"{name}\'s {game_list[game_name]['display_name']} best {game_list[game_name]['pb_amount_in_top']} ({best_types[best_type]})"
+            )
             embed.set_image(url="attachment://image.png")
 
-            await interaction.response.send_message(embed=embed, files=[file])
+            await interaction.followup.send(embed=embed, files=[file])  # <-- Toujours followup
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(GetBX(bot))
