@@ -142,7 +142,11 @@ class SDVXProfile:
                             
                         except KeyError:
                             sync_covers("sdvx")
-                            image_url = songs_data[score.songname]["cover"]
+                            try:
+                                image_url = songs_data[score.songname]["cover"]
+                            except KeyError:
+                                image_url = "https://remywiki.com/images/thumb/e/ed/Generic_Jacket_EG.png/200px-Generic_Jacket_EG.png"
+                                safe_songname = "default_icon"
                     
                     img_data = requests.get(image_url).content
                     with open(f"{cover_folder_path}/{safe_songname}.png", 'wb') as handler:
@@ -188,7 +192,7 @@ class SDVXProfile:
                 draw.polygon(triangle, fill="white")
                 
                 #Rating display
-                content = f"{score.rating}"
+                content = f"{score.rating:.3f}"
                 bbox = draw.textbbox((0, 0), content, font=font_rating)
                 text_width = bbox[2] - bbox[0]
 
@@ -200,8 +204,8 @@ class SDVXProfile:
                 if score.lamp in ['ULTIMATE CHAIN', "PERFECT ULTIMATE CHAIN", "EXCESSIVE CLEAR"]:
                     lamp = f"{''.join([x[0] for x in score.lamp.split(' ')])}"
                     
-                    draw.rectangle([(x + length_size_x - 25, y+40), (x+length_size_x, y+68)], fill=(0, 0, 0))
-                    draw.text((x + length_size_x - 20, y+46), lamp, fill=get_lamp_color(lamp), font=font_score)
+                    draw.rectangle([(x + length_size_x - 30, y+40), (x+length_size_x, y+68)], fill=(0, 0, 0))
+                    draw.text((x + length_size_x - 25, y+46), lamp, fill=get_lamp_color(lamp), font=font_score)
                 
                 # Score display
                 score_amount = f"{score.score}"
@@ -250,7 +254,7 @@ class SDVXProfile:
         length_size_x, length_size_y = 115, 115
         border_size = 5  
               
-        content = f"{player_username} - {self.get_naive_rating()}VF"
+        content = f"{player_username} - {self.get_naive_rating():.3f}VF"
         bbox = draw.textbbox((0, 0), content, font=font_upper)
         text_width = bbox[2] - bbox[0]
 
