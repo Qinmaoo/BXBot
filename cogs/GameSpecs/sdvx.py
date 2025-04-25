@@ -12,6 +12,8 @@ difficulty_to_color = {
     "GRV":"brown",
     "VVD":"pink",
     "XCD":"blue",
+    "HVN":"lightblue",
+    "INF":'pink',
     
 }
 
@@ -29,9 +31,7 @@ def get_lamp_color(lamp):
     if lamp == "EC": return "red"
     return "white"
 
-name_whitelist = {
-    "ANGER of the GOD":"ANGER of the GOD(EXIT TUNES)",
-}
+name_whitelist = {}
 
 class SDVXScore:
     def __init__(self, score, songid, songname, diff, internal_level, rating, lamp, grade=""):
@@ -136,14 +136,19 @@ class SDVXProfile:
                     try:
                         image_url = songs_data[score.songname]["cover"]
                     except KeyError:
-                        sync_covers("sdvx")
-                        image_url = songs_data[score.songname]["cover"]
+                        try:
+                            adapted_songname = score.songname + "(EXIT TUNES)"
+                            image_url = songs_data[adapted_songname]["cover"]
+                            
+                        except KeyError:
+                            sync_covers("sdvx")
+                            image_url = songs_data[score.songname]["cover"]
                     
-                    image_url = songs_data[score.songname]["cover"]
                     img_data = requests.get(image_url).content
                     with open(f"{cover_folder_path}/{safe_songname}.png", 'wb') as handler:
                         handler.write(img_data)
                     overlay_image = Image.open(f'{cover_folder_path}/{safe_songname}.png').convert("RGBA")
+                    
                 border_color = difficulty_to_color[score.diff]
                 overlay_image = overlay_image.resize((length_size_x, length_size_y))
                 overlay_image = ImageOps.expand(overlay_image, border=border_size, fill=border_color)
@@ -216,7 +221,7 @@ class SDVXProfile:
                 
                 
                 # Title length cropping if necessary
-                songname = score.songname
+                songname = score.songname.replace("(EXIT TUNES)","")
                 
                 bbox = font_title.getbbox(songname)
                 text_width = bbox[2] - bbox[0]
