@@ -6,6 +6,7 @@ import json
 from cogs.GameSpecs.gamelist import game_list
 from cogs.GameSpecs.chunithm import ChunithmProfile
 from cogs.GameSpecs.maimaidx import MaimaiDXProfile
+from cogs.GameSpecs.sdvx import SDVXProfile
 from typing import Optional
 import sys, io
 
@@ -28,12 +29,17 @@ def get_best_x(game, ratingType, username, id):
                 game_profile = ChunithmProfile(kamai_username)
             elif game == "maimaidx":
                 game_profile = MaimaiDXProfile(kamai_username)
+            elif game == "sdvx":
+                game_profile = SDVXProfile(kamai_username)
             else:
                 return {}, "An error has occured"
             
             game_profile.reload_pbs()
             
-            background = game_profile.get_card(username, ratingType)
+            if game_list[game]["has_old_new"]:
+                background = game_profile.get_card(username, ratingType)
+            else:
+                background = game_profile.get_card(username)
             return background, "Done!"
                     
     else:

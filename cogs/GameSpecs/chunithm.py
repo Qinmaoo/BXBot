@@ -161,7 +161,11 @@ class ChunithmProfile:
                     overlay_image = Image.open(f'{cover_folder_path}/{safe_songname}.png').convert("RGBA")
                 except FileNotFoundError:
                     print("Fetching cover for", score)
-                    image_url = songs_data[score.songname]["cover"]
+                    try:
+                        image_url = songs_data[score.songname]["cover"]
+                    except KeyError:
+                        sync_covers("chunithm")
+                        image_url = songs_data[score.songname]["cover"]
                     img_data = requests.get(image_url).content
                     with open(f"{cover_folder_path}/{safe_songname}.png", 'wb') as handler:
                         handler.write(img_data)
@@ -292,6 +296,7 @@ class ChunithmProfile:
 
 if __name__ == "__main__":
     from gamelist import game_list
+    from sync_covers import sync_covers
     top_amount = game_list["chunithm"]["pb_amount_in_top"]
     old_amount = game_list["chunithm"]["pb_amount_in_old"]
     new_amount = game_list["chunithm"]["pb_amount_in_new"]
@@ -309,6 +314,7 @@ if __name__ == "__main__":
 
 else:
     from cogs.GameSpecs.gamelist import game_list
+    from cogs.GameSpecs.sync_covers import sync_covers
     top_amount = game_list["chunithm"]["pb_amount_in_top"]
     old_amount = game_list["chunithm"]["pb_amount_in_old"]
     new_amount = game_list["chunithm"]["pb_amount_in_new"]

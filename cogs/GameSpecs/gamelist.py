@@ -21,14 +21,17 @@ game_list = {
         "pb_amount_in_top": 50,
         "name_in_url_ztk": "maimai",
         },
-    # "iidx": {
-    #     "display_name":"Beatmania IIDX",
-    #     "rating_name":"KTLampRating",
-    #     "rating_shortcut":"kt",
-    #     "has_old_new": False,
-    #     "has_recent": False,
-    #     "pb_amount_in_top": 20,
-    #     },
+    "sdvx": {
+        "display_name":"Sound Voltex",
+        "rating_name":"Volforce",
+        "rating_shortcut":"VF",
+        "has_old_new": False,
+        "pb_amount_in_old": 35,
+        "pb_amount_in_new": 15,
+        "has_recent": False,
+        "pb_amount_in_top": 50,
+        "name_in_url_ztk": "sdvx",
+        },
 }
 
 class Game:

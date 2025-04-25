@@ -1,7 +1,7 @@
-from gamelist import game_list
 import requests, json
 
-for gameid, gamedata in game_list.items():
+def sync_covers(gameid):
+    gamedata = game_list[gameid]
     print(gameid, "\n")
     game_json = {}
     url = f"https://dp4p6x0xfi5o9.cloudfront.net/{gamedata['name_in_url_ztk']}/data.json"
@@ -18,4 +18,14 @@ for gameid, gamedata in game_list.items():
             json.dump(game_json, f)
     else:
         print("Erreur :", response.status_code)
-    print("\n\n")
+
+if __name__ == "__main__":
+    from gamelist import game_list
+    for gameid, gamedata in game_list.items():
+        sync_covers(gameid)
+        
+else:
+    try:
+        from cogs.GameSpecs.gamelist import game_list
+    except ModuleNotFoundError:
+        from gamelist import game_list
