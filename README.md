@@ -7,9 +7,9 @@ The main use for the bot is to generate a scorecard for the game of your choosin
 
 ## Current scope
 
-For now, the bot fully supports MaimaiDX (Prism+) and Chunithm (Verse).
+For now, the bot fully supports MaimaiDX (Prism+), Chunithm (Verse), Sound Voltex.
 
-Jubeat, SDVX, IIDX, WACCA & Ongeki support to come.
+Jubeat, IIDX, WACCA & Ongeki support to come.
 
 *note that games with a "recent" score system will probably not have an accurate in-game representation. Recents are dumb anyways.
 
