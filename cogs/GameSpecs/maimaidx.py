@@ -155,13 +155,21 @@ class MaimaiDXProfile:
                     print("Fetching cover for", score)
                     try:
                         image_url = songs_data[score.songname]["cover"]
+                        img_data = requests.get(image_url).content
+                        with open(f"{cover_folder_path}/{safe_songname}.png", 'wb') as handler:
+                            handler.write(img_data)
                     except KeyError:
-                        sync_covers("maimaidx")
-                        image_url = songs_data[score.songname]["cover"]
-                    img_data = requests.get(image_url).content
-                    with open(f"{cover_folder_path}/{safe_songname}.png", 'wb') as handler:
-                        handler.write(img_data)
+                        sync_covers("chunithm")
+                        try:
+                            image_url = songs_data[score.songname]["cover"]
+                            img_data = requests.get(image_url).content
+                            with open(f"{cover_folder_path}/{safe_songname}.png", 'wb') as handler:
+                                handler.write(img_data)
+                        except KeyError:
+                            safe_songname = "default_icon"
+                    
                     overlay_image = Image.open(f'{cover_folder_path}/{safe_songname}.png').convert("RGBA")
+                 
                 
                 border_color = difficulty_to_color[score.diff.split(" ")[-1]]
                 overlay_image = overlay_image.resize((length_size_x, length_size_y))

@@ -37,9 +37,9 @@ def get_best_x(game, ratingType, username, id):
             game_profile.reload_pbs()
             
             if game_list[game]["has_old_new"]:
-                background = game_profile.get_card(username, ratingType)
+                background = game_profile.get_card(kamai_username, ratingType)
             else:
-                background = game_profile.get_card(username)
+                background = game_profile.get_card(kamai_username)
             return background, "Done!"
                     
     else:
