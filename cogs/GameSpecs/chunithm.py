@@ -9,7 +9,7 @@ import os
 def is_latest_ver(chart):
         versions = chart.get("versions", [])
         return (
-            (len(versions) == 2 and "verse" in versions and "verse-omni" in versions) or
+            (len(versions) == 3 and "verse" in versions and "verse-omni" in versions and "verse-intl" in versions) or
             (len(versions) == 4 and all(v in versions for v in ["verse", "verse-omni", "luminousplus-intl", "luminousplus-omni"]))
         )
 
