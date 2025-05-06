@@ -61,7 +61,7 @@ class ChunithmProfile:
         pb = entry["pb"]
         scoredata = pb['scoreData']
         score = scoredata['score']
-        lamp = scoredata['lamp']
+        lamp = scoredata['noteLamp']
         grade = scoredata['grade']
         songid = -1
         songname = entry["song"]['title']
