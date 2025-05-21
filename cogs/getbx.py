@@ -9,41 +9,63 @@ from cogs.GameSpecs.maimaidx import MaimaiDXProfile
 from cogs.GameSpecs.sdvx import SDVXProfile
 from typing import Optional
 import sys, io
+import requests
 
 parentPath = os.path.dirname(os.path.abspath(__file__))
 best_types = {"ingame":"In-game","naive":"Naive"}
 
 
-def get_best_x(game, ratingType, username, id):
-    path = parentPath+f"/profiles/{id}.json"
+def get_best_x(game, ratingType, id, username=None):
+
+    if username:
+        kamai_username = username
+        if game == "chunithm":
+            game_profile = ChunithmProfile(kamai_username)
+        elif game == "maimaidx":
+            game_profile = MaimaiDXProfile(kamai_username)
+        elif game == "sdvx":
+            game_profile = SDVXProfile(kamai_username)
+        else:
+            return {}, "An error has occured"
+        
+        game_profile.reload_pbs()
+        
+        if game_list[game]["has_old_new"]:
+            background = game_profile.get_card(kamai_username, ratingType)
+        else:
+            background = game_profile.get_card(kamai_username)
+        return background, "Done!"
     
-    if os.path.exists(path):
-        with open(path, "r") as f:
-            user_json = json.load(f)
-            try:
-                kamai_username = user_json["profileData"]["kamaiUsername"]
-            except KeyError:
-                return {}, "Please link your Kamaitachi account first."
-               
-            if game == "chunithm":
-                game_profile = ChunithmProfile(kamai_username)
-            elif game == "maimaidx":
-                game_profile = MaimaiDXProfile(kamai_username)
-            elif game == "sdvx":
-                game_profile = SDVXProfile(kamai_username)
-            else:
-                return {}, "An error has occured"
-            
-            game_profile.reload_pbs()
-            
-            if game_list[game]["has_old_new"]:
-                background = game_profile.get_card(kamai_username, ratingType)
-            else:
-                background = game_profile.get_card(kamai_username)
-            return background, "Done!"
-                    
     else:
-        return {}, "Please register first."
+        path = parentPath+f"/profiles/{id}.json"
+        
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                user_json = json.load(f)
+                try:
+                    kamai_username = user_json["profileData"]["kamaiUsername"]
+                except KeyError:
+                    return {}, "Please link your Kamaitachi account first."
+                
+                if game == "chunithm":
+                    game_profile = ChunithmProfile(kamai_username)
+                elif game == "maimaidx":
+                    game_profile = MaimaiDXProfile(kamai_username)
+                elif game == "sdvx":
+                    game_profile = SDVXProfile(kamai_username)
+                else:
+                    return {}, "An error has occured"
+                
+                game_profile.reload_pbs()
+                
+                if game_list[game]["has_old_new"]:
+                    background = game_profile.get_card(kamai_username, ratingType)
+                else:
+                    background = game_profile.get_card(kamai_username)
+                return background, "Done!"
+                        
+        else:
+            return {}, "Please register first."
 
 class GetBX(commands.Cog):
     def __init__(self, bot:commands.Bot) -> None:
@@ -56,7 +78,8 @@ class GetBX(commands.Cog):
     
     @app_commands.describe(
         game_name = "Game",
-        best_type = "Type of best (in-game / naive)"
+        best_type = "Type of best (in-game / naive)",
+        player_name = "Kamaitachi username of the player you're searching"
     )
     
     @app_commands.choices(
@@ -68,18 +91,29 @@ class GetBX(commands.Cog):
         self,
         interaction: discord.Interaction,
         game_name: app_commands.Choice[str],
-        best_type: Optional[app_commands.Choice[str]] = None
+        best_type: Optional[app_commands.Choice[str]] = None,
+        player_name: Optional[str] = None
     ) -> None:
         
-        await interaction.response.defer(thinking=True)  # <-- Ajout pour éviter le timeout
+        await interaction.response.defer(thinking=True)
 
-        name = interaction.user.display_name
         id = interaction.user.id
         game_name = game_name.value
         best_type = best_type.value if best_type else "naive"
         
-        data, answer = get_best_x(game_name, best_type, name, id)
+        if player_name:
+            response = requests.get(f"https://kamai.tachi.ac/api/v1/users/{player_name}/games/{game_name}/Single/pbs/all")
+            
+            if response.json()["success"] == "false":
+                await interaction.followup.send("User not found.")
+                return ""
+            else:
+                data, answer = get_best_x(game_name, best_type, id, player_name)
         
+        else:    
+            player_name = interaction.user.display_name
+            data, answer = get_best_x(game_name, best_type, id)
+            
         if data == {}:
             await interaction.followup.send(answer)  
         else:
@@ -89,7 +123,7 @@ class GetBX(commands.Cog):
 
             file = discord.File(buffer, filename="image.png")
             embed = discord.Embed(
-                title=f"{name}\'s {game_list[game_name]['display_name']} best {game_list[game_name]['pb_amount_in_top']} ({best_types[best_type]})"
+                title=f"{player_name}\'s {game_list[game_name]['display_name']} best {game_list[game_name]['pb_amount_in_top']} ({best_types[best_type]})"
             )
             embed.set_image(url="attachment://image.png")
 
