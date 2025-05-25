@@ -4,6 +4,8 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 from io import BytesIO  
 import os
 
+def truncate(f, n):
+    return int(f * 10**n) / 10**n
 
 
 def is_latest_ver(chart):
@@ -110,29 +112,32 @@ class ChunithmProfile:
         sum_of_ratings = 0
         for score in self.best_new:
             sum_of_ratings += score.rating
-        new_rating = round(sum_of_ratings/new_amount,2)
+        new_rating = sum_of_ratings/new_amount
         return new_rating
     
     def get_old_rating(self):
         sum_of_ratings = 0
         for score in self.best_old:
             sum_of_ratings += score.rating
-        old_rating = round(sum_of_ratings/old_amount,2)
+        old_rating = sum_of_ratings/old_amount
         return old_rating
     
     def get_naive_rating(self):
         sum_of_ratings = 0
         for score in self.best_naive:
             sum_of_ratings += score.rating
-        naive_rating = round(sum_of_ratings/top_amount,2)
-        return naive_rating
+        naive_rating =sum_of_ratings/top_amount
+        print('naiverate', naive_rating)
+        
+        return truncate(naive_rating,2)
     
     def get_ingame_rating(self):
         new_rating = self.get_new_rating()
         old_rating = self.get_old_rating()
 
-        ingame_rating = round((new_rating*new_amount + old_rating*old_amount)/50,2)
-        return ingame_rating
+        ingame_rating = (new_rating*new_amount + old_rating*old_amount)/50
+        print("new rt", new_rating, "old rt", old_rating)
+        return truncate(ingame_rating, 2)
     
     def get_card(self, player_username, best_type="naive"):
         print("loading bg")
@@ -317,9 +322,7 @@ if __name__ == "__main__":
     
     background_naive = my_profile.get_card(display_username, "naive")
     background_ingame = my_profile.get_card(display_username, "ingame")
-    
     background_naive.save(f"scorecard_output/resultat_naive_chunithm_{display_username}.png")
-    background_ingame.save(f"scorecard_output/resultat_ingame_chunithm_{display_username}.png")
 
 else:
     from cogs.GameSpecs.gamelist import game_list
