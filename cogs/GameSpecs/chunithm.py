@@ -10,6 +10,10 @@ def truncate(f, n):
 
 def is_latest_ver(chart):
         versions = chart.get("versions", [])
+        songID = chart.get("songID",0)
+        difficulty = chart.get("difficulty", "")
+        old_with_new_ult = [435]
+        if songID in old_with_new_ult: return False
         return (
             (len(versions) == 3 and "verse" in versions and "verse-omni" in versions and "verse-intl" in versions) or
             (len(versions) == 4 and all(v in versions for v in ["verse", "verse-omni", "luminousplus-intl", "luminousplus-omni"])) or
