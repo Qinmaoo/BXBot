@@ -32,6 +32,17 @@ game_list = {
         "pb_amount_in_top": 50,
         "name_in_url_ztk": "sdvx",
         },
+    "ongeki": {
+        "display_name":"ONGEKI",
+        "rating_name":"Rating",
+        "rating_shortcut":"rt",
+        "has_old_new": True,
+        "pb_amount_in_old": 50,
+        "pb_amount_in_new": 10,
+        "has_recent": False,
+        "pb_amount_in_top": 45,
+        "name_in_url_ztk": "ongeki",
+    }
 }
 
 class Game:

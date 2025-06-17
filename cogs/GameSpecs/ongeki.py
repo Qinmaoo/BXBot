@@ -4,19 +4,22 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 from io import BytesIO  
 import os
 
+from math import floor
+
 def truncate(f, n):
     return int(f * 10**n) / 10**n
 
 
-def is_latest_ver(song):
-        return (song["data"]["displayVersion"] == 'CHUNITHM VERSE')
+def is_latest_ver(chart):
+        version = chart["data"]["displayVersion"]
+        return version == "オンゲキ Re:Fresh"
 
 difficulty_to_color = {
     "BASIC":"green",
     "ADVANCED":"yellow",
     "EXPERT":"red",
     "MASTER":"purple",
-    "ULTIMA":"black",
+    "LUNATIC":"white",
 }
 
 def get_grade_color(grade):
@@ -33,9 +36,79 @@ def get_lamp_color(lamp):
     if lamp == "FC": return "#e3a54d"
     return "white"
 
-class ChunithmScore:
-    def __init__(self, score, songid, songname, diff, internal_level, rating, lamp, grade=""):
+def score_coefficient_function(x):
+    points = [
+        (800000, -6000),
+        (900000, -4000),
+        (970000,  0),
+        (990000,  750),
+        (1000000, 1250),
+        (1007500, 1750),
+        (1010000, 2000)
+    ]
+
+    if x <= points[0][0]:
+        return -6000
+    else:
+        for i in range(len(points) - 1):
+            x0, y0 = points[i]
+            x1, y1 = points[i + 1]
+            if x0 <= x <= x1:
+                break
+
+    y = y0 + (y1 - y0) * (x - x0) / (x1 - x0)
+    return y
+
+def get_rating(internal_level, score, grade, bell_lamp, combo_lamp):
+    grade_bonus_association = {
+        "SS": 100,
+        "SSS": 200,
+        "SSS+": 300
+    }
+    if grade in grade_bonus_association.keys(): grade_bonus = grade_bonus_association[grade]
+    else: grade_bonus = 0
+    
+    if bell_lamp == "FULL BELL": bell_bonus = 50
+    else: bell_bonus = 0
+    
+    combo_bonus_association = {
+        "FULL COMBO": 100,
+        "ALL BREAK": 300,
+        "ALL BREAK+": 350
+    }
+    if combo_lamp in combo_bonus_association.keys(): combo_bonus = combo_bonus_association[combo_lamp]
+    else: combo_bonus = 0
+    
+    if score <= 500000: return 0
+    
+    score_coefficient = score_coefficient_function(score)
+    
+    if score < 800000: return (internal_level - 6)*(score-500000)/300000
+    
+    score_rating = max(0, internal_level*1000 + score_coefficient + grade_bonus + bell_bonus + combo_bonus)
+    score_rating = score_rating
+    return floor(score_rating)
+
+def get_starrating(songname, platscore, max_platscore, internal_level):
+    platscore_ratio = platscore/max_platscore
+        
+    if platscore_ratio < 0.94: stars = 0
+    elif platscore_ratio < 0.95: stars = 1
+    elif platscore_ratio < 0.96: stars = 2
+    elif platscore_ratio < 0.97: stars = 3
+    elif platscore_ratio < 0.98: stars = 4
+    else: stars = 5
+    
+    starrating = truncate(stars*(internal_level**2), 3)
+    # if starrating != 0.0: print(f"{songname} ({internal_level}): {platscore} / {max_platscore} - {stars}* - {starrating}")
+    return floor(starrating)
+
+
+
+class OngekiScore:
+    def __init__(self, score, starrating, songid, songname, diff, internal_level, rating, lamp, grade=""):
         self.score = score
+        self.starrating = starrating
         self.songid = songid
         self.songname = songname
         self.diff = diff
@@ -47,43 +120,55 @@ class ChunithmScore:
     def __str__(self):
         return f"{self.songname} [{self.diff[:3]} {self.internal_level}] - {self.score} ({self.rating})"
 
-class ChunithmProfile:
-    def __init__(self, player, best_old = [], best_new = [], best_naive = []):
+class OngekiProfile:
+    def __init__(self, player, best_old = [], best_new = [], best_naive = [], best_star = []):
         self.player = player
-        self.api_url = f"https://kamai.tachi.ac/api/v1/users/{player}/games/chunithm/Single/pbs/all"
+        self.api_url = f"https://kamai.tachi.ac/api/v1/users/{player}/games/ongeki/Single/pbs/all"
         self.best_old = best_old
         self.best_new = best_new
+        self.best_star = best_star
         self.best_naive = best_naive
         
     def add_pb(self, entry):
         pb = entry["pb"]
         scoredata = pb['scoreData']
         score = scoredata['score']
+        platscore = scoredata['optional']["platScore"]
         lamp = scoredata['noteLamp']
         grade = scoredata['grade']
-        song = entry["song"]
-        songid = song["id"]
+        songid = pb["songID"]
         songname = entry["song"]['title']
         chart = entry["chart"]
         diff = chart['difficulty']
         internal_level = chart['levelNum']
-        rating = pb["calculatedData"]["rating"]
+        bell_lamp = scoredata["bellLamp"]
+        combo_lamp = scoredata["noteLamp"]
+        rating = get_rating(internal_level, score, grade, bell_lamp, combo_lamp)
+        # rating = pb["calculatedData"]["rating"]
         
+        max_platscore = chart["data"]["maxPlatScore"]
         
-        if is_latest_ver(song):
-            self.best_new.append(ChunithmScore(score, songid, songname, diff, internal_level, rating, lamp, grade))
+        starrating = get_starrating(songname, platscore, max_platscore, internal_level)
+        
+        if is_latest_ver(chart):
+            self.best_new.append(OngekiScore(score, starrating, songid, songname, diff, internal_level, rating, lamp, grade))
             self.best_new = sorted(self.best_new, key=lambda x: x.rating, reverse=True)[:new_amount]
         else:
-            self.best_old.append(ChunithmScore(score, songid, songname, diff, internal_level, rating, lamp, grade))
+            self.best_old.append(OngekiScore(score, starrating, songid, songname, diff, internal_level, rating, lamp, grade))
             self.best_old = sorted(self.best_old, key=lambda x: x.rating, reverse=True)[:old_amount]
             
-        self.best_naive.append(ChunithmScore(score, songid, songname, diff, internal_level, rating, lamp, grade))
+        self.best_naive.append(OngekiScore(score, starrating, songid, songname, diff, internal_level, rating, lamp, grade))
         self.best_naive = sorted(self.best_naive, key=lambda x: x.rating, reverse=True)[:top_amount]
+        
+        self.best_star.append(OngekiScore(score, starrating, songid, songname, diff, internal_level, rating, lamp, grade))
+        self.best_star = sorted(self.best_star, key=lambda x: x.starrating, reverse=True)[:star_rating_amount]
 
     def reload_pbs(self):
         self.best_old = []
         self.best_new = []
         self.best_naive = []
+        self.best_star = []
+        
         try:
             response = requests.get(self.api_url)
             data = response.json()
@@ -93,6 +178,7 @@ class ChunithmProfile:
 
             for pb in pbs:
                 chart = next((c for c in charts if c["chartID"] == pb["chartID"]), None)
+                
                 song = next((s for s in songs if s["id"] == pb["songID"]), None)
 
                 if not chart:
@@ -103,45 +189,74 @@ class ChunithmProfile:
 
         except Exception as e:
             print("Error fetching data:", e)
-    
+            
     def get_new_rating(self):
         sum_of_ratings = 0
         for score in self.best_new:
-            sum_of_ratings += score.rating
+            sum_of_ratings += 2*score.rating
         new_rating = sum_of_ratings/new_amount
-        return new_rating
+        return floor(new_rating/10)
     
     def get_old_rating(self):
         sum_of_ratings = 0
         for score in self.best_old:
             sum_of_ratings += score.rating
         old_rating = sum_of_ratings/old_amount
-        return old_rating
+        return floor(old_rating)
+    
+    def get_star_rating(self):
+        sum_of_ratings = 0
+        for score in self.best_star:
+            sum_of_ratings += score.starrating
+        star_rating = sum_of_ratings/star_rating_amount
+        return floor(star_rating)
     
     def get_naive_rating(self):
         sum_of_ratings = 0
         for score in self.best_naive:
             sum_of_ratings += score.rating
-        naive_rating =sum_of_ratings/top_amount
+        naive_rating = truncate(sum_of_ratings/top_amount,2)
         print('naiverate', naive_rating)
         
-        return truncate(naive_rating,2)
+        return naive_rating
     
     def get_ingame_rating(self):
         new_rating = self.get_new_rating()
         old_rating = self.get_old_rating()
+        star_rating = self.get_star_rating()
 
-        ingame_rating = (new_rating*new_amount + old_rating*old_amount)/50
-        print("new rt", new_rating, "old rt", old_rating)
-        return truncate(ingame_rating, 2)
+        ingame_rating = new_rating + old_rating + star_rating
+        ingame_rating /= 1000
+        print("new rt", new_rating/1000, "old rt", old_rating/1000, "star rt", star_rating/1000)
+        print("ingame rt", ingame_rating)
+        return ingame_rating
     
+    def print_bests(self):
+        print("best old")
+        i = 1
+        for e in self.best_old:
+            print(f"#{i} {e.songname} [{e.diff} {e.internal_level}] - {e.score} ({e.grade} - {e.lamp} - {e.rating})")
+            i+=1
+        
+        print("\n\nbest new")
+        i=1
+        for e in self.best_new:
+            print(f"#{i} {e.songname} [{e.diff} {e.internal_level}] - {e.score} ({e.grade} - {e.lamp} - {e.rating})")
+            i+=1
+            
+        print("\n\nbest star")
+        i=1
+        for e in self.best_star:
+            print(f"#{i} {e.songname} [{e.diff} {e.internal_level}] - {e.score} ({e.grade} - {e.starrating} - {e.lamp} - {e.rating})")
+            i+=1
+            
     def get_card(self, player_username, best_type="naive"):
         print("loading bg")
-        background = Image.open(f"cogs/assets/scorecard_template/chunithm_{best_type}.png").convert("RGBA")
+        background = Image.open(f"cogs/assets/scorecard_template/ongeki_{best_type}.png").convert("RGBA")
         print("bg loaded")
         
         print("loading game data covers")
-        with open("cogs/GameSpecs/covers/chunithm.json", encoding="utf-8") as f:
+        with open("cogs/GameSpecs/covers/ongeki.json", encoding="utf-8") as f:
             songs_data = json.load(f)
         print("game data loaded")
         
@@ -154,7 +269,7 @@ class ChunithmProfile:
             x, y = initial_x, intial_y
             for score in best:
                 safe_songname = re.sub(r'[<>:"/\\|?*\n\r\t]', '_', score.songname)
-                cover_folder_path = "cogs/GameSpecs/covers/chunithm"
+                cover_folder_path = "cogs/GameSpecs/covers/ongeki"
                 
                 if not os.path.isdir(cover_folder_path):
                     os.makedirs(cover_folder_path)
@@ -169,7 +284,7 @@ class ChunithmProfile:
                         with open(f"{cover_folder_path}/{safe_songname}.png", 'wb') as handler:
                             handler.write(img_data)
                     except KeyError:
-                        sync_covers("chunithm")
+                        sync_covers("ongeki")
                         try:
                             image_url = songs_data[score.songname]["cover"]
                             img_data = requests.get(image_url).content
@@ -307,23 +422,31 @@ class ChunithmProfile:
 if __name__ == "__main__":
     from gamelist import game_list
     from sync_covers import sync_covers
-    top_amount = game_list["chunithm"]["pb_amount_in_top"]
-    old_amount = game_list["chunithm"]["pb_amount_in_old"]
-    new_amount = game_list["chunithm"]["pb_amount_in_new"]
+    top_amount = game_list["ongeki"]["pb_amount_in_top"]
+    old_amount = game_list["ongeki"]["pb_amount_in_old"]
+    new_amount = game_list["ongeki"]["pb_amount_in_new"]
+    star_rating_amount = 50
     
-    kamai_username = "qinmao"
-    display_username = "Qinmao"
-    my_profile = ChunithmProfile(kamai_username)
+    # print(get_rating(13.8, 1009135 , "SSS+","FULL BELL","ALL BREAK"))
+    # print(get_starrating("test", 2592, 3492, 14.2))
+    
+    kamai_username = "lisieshy"
+    display_username = "Twis"
+    my_profile = OngekiProfile(kamai_username)
     my_profile.reload_pbs()
     
-    background_naive = my_profile.get_card(display_username, "naive")
-    background_ingame = my_profile.get_card(display_username, "ingame")
-    background_naive.save(f"scorecard_output/resultat_naive_chunithm_{display_username}.png")
-    background_ingame.save(f"scorecard_output/resultat_ingame_chunithm_{display_username}.png")
+    my_profile.print_bests()
+    print("")
+    my_profile.get_ingame_rating()
+    
+    # background_naive = my_profile.get_card(display_username, "naive")
+    # background_ingame = my_profile.get_card(display_username, "ingame")
+    # background_naive.save(f"scorecard_output/resultat_naive_ongeki_{display_username}.png")
 
 else:
     from cogs.GameSpecs.gamelist import game_list
     from cogs.GameSpecs.sync_covers import sync_covers
-    top_amount = game_list["chunithm"]["pb_amount_in_top"]
-    old_amount = game_list["chunithm"]["pb_amount_in_old"]
-    new_amount = game_list["chunithm"]["pb_amount_in_new"]
+    top_amount = game_list["ongeki"]["pb_amount_in_top"]
+    old_amount = game_list["ongeki"]["pb_amount_in_old"]
+    new_amount = game_list["ongeki"]["pb_amount_in_new"]
+    star_rating_amount = 50
